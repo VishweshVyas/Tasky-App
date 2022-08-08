@@ -1,0 +1,87 @@
+:root {
+  --primary-color: #1d1c1c;
+  --dark-color: #333333;
+  --light-color: #f4f4f4;
+  --danger-color: #dc3545;
+  --success-color: #28a745;
+}
+a {
+  text-decoration: none;
+  color: black;
+}
+
+h3 {
+  padding: 15px;
+  font-size: x-large;
+  font-weight: bold;
+  width: 40%;
+  background-color: #e5e5e5;
+  color: black;
+}
+
+img {
+  width: 30%;
+  height: auto;
+}
+
+.container {
+  width: 40%;
+  margin: auto;
+}
+.alert {
+  padding: 0.7rem;
+  margin: 1rem 0;
+  opacity: 0.9;
+  background: var(--light-color);
+  color: #333;
+}
+.alert-success {
+  background-color: green;
+  color: #fff;
+  text-align: center;
+}
+
+.alert-danger {
+  background-color: red;
+  color: #fff;
+  text-align: center;
+}
+
+
+
+/* Full-width input fields */
+input[type="text"],
+input[type="datetime-local"],
+input[type="password"],
+input[type="email"],
+input[type="tel"],
+textarea,
+select {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  display: inline-block;
+  border: none;
+  background: #f1f1f1;
+}
+
+input[type="submit"] {
+  width: 30%;
+  padding: 15px;
+  font-weight: bolder;
+  border: none;
+  background: #b4b4bc;
+  cursor: pointer;
+  color: black;
+}
+
+
+@media only screen and (max-width : 620px) {
+  .home {
+      margin-top: 50%;
+  }
+  .container {
+      width: 80%;
+      margin: auto;
+  }
+}

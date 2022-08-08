@@ -1,0 +1,17 @@
+{
+  "name": "tasky-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "server" : "npm start --prefix server ",
+    "client" : "npm start --prefix client",
+    "start": "concurrently 'npm run client' 'npm run server' "
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^7.3.0"
+  }
+}
