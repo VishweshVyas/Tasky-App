@@ -17,9 +17,29 @@ const userSchema = mongoose.Schema({
     password : {
         type : String,
         required : true
+    },
+    verifyToken : {
+        email :{
+            type : String,
+            required : true
+        },
+        sms : {
+            type : String,
+            required : true
+        }
+    },
+    verifiedUser : {
+        email :{
+            type : Boolean,
+            default : false
+        },
+        sms : {
+            type : Boolean,
+            default : false
+        }
     }
 });
 
-const User = mongoose.model("Uset",userSchema,"users");
+const User = mongoose.model("User",userSchema,"users");
 
 export default User;

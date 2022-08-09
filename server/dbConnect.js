@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
+import config from "config";
 
 async function dbConnect(){
     try {
-        await mongoose.connect(`mongodb+srv://vishwesh:HVbQav05gcg7DdkT@ths.tpa6odc.mongodb.net/Tasky-App`);
+        await mongoose.connect(config.get("DB_URL"));
         console.log(`Mongo Connected`);
     } catch (error) {
         console.log(error);

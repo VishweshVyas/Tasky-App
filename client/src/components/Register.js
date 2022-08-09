@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import Alert from "./Alert";
 import axios from "axios";
 
 
 function Register({createAlert,alert}) {
-
+    let navigate = useNavigate();
     const[user,setUser] = useState({
         fname : "",
         email: "",
@@ -32,6 +32,7 @@ function Register({createAlert,alert}) {
            else{
              let {data} = await axios.post("/api/user/register",user);
              createAlert({type : "success",msg:data.success});
+             navigate("../login", { replace: true });
            }
        } 
        catch (error) {
