@@ -5,8 +5,19 @@ import mongoose from "mongoose";
 import User from "../../models/Users.js";
 import sendMail from "../../utils/sendMail.js";
 import sendSMS from "../../utils/sendSMS.js";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
+
+/*
+    API : /api/user/register
+    Desc : User SignUp
+    Method : POST
+    Body : email,password,fname,phonenumber
+    Params : -
+    Access : Public
+    Validations : Unique email, Password Strength
+*/
 
 router.post("/register", async (req, res) => {
     try {
@@ -38,7 +49,7 @@ router.post("/register", async (req, res) => {
         
         sendSMS({
              to : req.body.phone,
-             body: `Hello ${req.body.fname} Click here :  href=${config.get("URL")}/api/user/verify/sms/${smsToken}`
+             body: `Hello ${req.body.fname} Click here to verify your phone number : ${config.get("URL")}/api/user/verify/sms/${smsToken}`
         })
 
         res.send({ "success": "Your account is successfully created" });
@@ -49,12 +60,22 @@ router.post("/register", async (req, res) => {
     }
 });
 
+/*
+    API : /api/user/verify/sms/:token
+    Desc : User number verification
+    Method : GET
+    Body : -
+    Params : token
+    Access : Public
+    Validations : Valid token
+*/
+
 router.get("/verify/sms/:token", async (req, res) => {
     try {
         let userSmsToken = req.params.token;
         let userData = User.findOne({"verifyToken.sms" : userSmsToken});
         if(userData.verifiedUser.sms){
-            return res.status(200).send("<h1> Email is already verified.");
+            return res.status(200).send("<h1> Phone Number is already verified.");
         }
         else{
             userData.verifiedUser.sms = true;
@@ -66,7 +87,18 @@ router.get("/verify/sms/:token", async (req, res) => {
         console.log(error);
         res.status(500).json({ error: `Internal Server Error` });
     }
-})
+});
+
+/*
+    API : /api/user/verify/email/:token
+    Desc : User email verification
+    Method : GET
+    Body : -
+    Params : token
+    Access : Public
+    Validations : Valid token
+*/
+
 
 router.get("/verify/email/:token", async (req, res) => {
     try {
@@ -85,25 +117,36 @@ router.get("/verify/email/:token", async (req, res) => {
         console.log(error);
         res.status(500).json({ error: `Internal Server Error` });
     }
-})
+});
+
+/*
+    API : /api/user/login
+    Desc : User  verification
+    Method : POST
+    Body : email,password
+    Params : -
+    Access : Public
+    Validations : Valid email,password
+*/
+
 
 router.post("/login", async (req, res) => {
     try {
-        let userFound = await User.findOne({ email: req.body.loginEmail });
-
-        if (userFound) {
-            let pwd = await bcrypt.compare(req.body.loginPassword, userFound.password);
-            if (pwd) {
-                res.status(200).json({ "success": "User Verified successfully" });
-
-            } else {
-                res.status(400).json({ error: "Invalid credentials" });
-
-            }
-        } else {
-            res.status(400).json({ error: "User does not exist" });
-
+        const userData = await User.findOne({ email: req.body.loginEmail })
+        if (!userData) {
+            return res.status(401).json({ error: "Invalid Credentials" });
         }
+        let match = await bcrypt.compare(req.body.loginPassword, userData.password);
+        if (!match) {
+            return res.status(401).json({ error: "Invalid Credentials" });
+        }
+        let payload = {
+            user_id: userData._id,
+            email: userData.email
+        }
+        let token = jwt.sign(payload, config.get("SECRET_KEYS.JWT"), { expiresIn: "1h" });
+
+        res.status(200).json({ token });
 
     }
     catch (error) {

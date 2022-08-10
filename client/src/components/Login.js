@@ -1,36 +1,39 @@
 import axios from "axios";
 import { useState } from "react";
-import {Link} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Alert from "./Alert";
 
-function Login({alert,createAlert}) {
+function Login({ alert, createAlert }) {
 
-    const[login,setLogin] = useState({
-        loginEmail : "",
-        loginPassword : ""
+    let navigate = useNavigate();
+    const [login, setLogin] = useState({
+        loginEmail: "",
+        loginPassword: ""
     });
 
-    const handleChange = (e) =>{
+    const handleChange = (e) => {
         const name = e.target.name;
         const value = e.target.value;
         setLogin({
             ...login,
-            [name] : value
+            [name]: value
         });
     }
 
-    const handleSubmit = async(e)=>{
-       try {
-           e.preventDefault();
-           let {data}= await axios.post("/api/user/login",login);
-           console.log(data);
-           createAlert({type : "success",msg:data.success});
-           
-       } 
-       catch (error) {
-           console.log(error);
-           createAlert({type:"danger",msg:error.response.data.error})
-       }
+    const handleSubmit = async (e) => {
+        try {
+            e.preventDefault();
+            let { data } = await axios.post("/api/user/login", login);
+            localStorage.setItem("token", data.token)
+            navigate("/dashboard", { replace: true });
+        }
+        catch (error) {
+            if (localStorage.getItem("token")) {
+                localStorage.removeItem("token");
+            }
+            console.log(error);
+            createAlert({ type: "danger", msg: error.response.data.error })
+        }
     }
 
     return (
@@ -45,12 +48,12 @@ function Login({alert,createAlert}) {
                     </center>
                 </div>
                 <div>
-                <Alert alert={alert}/>
+                    <Alert alert={alert} />
                     <form onSubmit={handleSubmit}>
                         <label htmlFor="loginEmail"><b>Email:</b></label><br />
-                        <input type="email" name="loginEmail" value={login.loginEmail} onChange={handleChange}/><br />
+                        <input type="email" name="loginEmail" value={login.loginEmail} onChange={handleChange} /><br />
                         <label htmlFor="loginPassword"><b>Password</b></label><br />
-                        <input type="password" name="loginPassword" value={login.loginPassword} onChange={handleChange}/><br /><br />
+                        <input type="password" name="loginPassword" value={login.loginPassword} onChange={handleChange} /><br /><br />
                         <input type="submit" value="Login" />
                     </form>
 
