@@ -46,10 +46,10 @@ router.post("/register", async (req, res) => {
         });
 
         // Writing logic for verifying mobile number;
-        
+
         sendSMS({
-             to : req.body.phone,
-             body: `Hello ${req.body.fname} Click here to verify your phone number : ${config.get("URL")}/api/user/verify/sms/${smsToken}`
+            to: req.body.phone,
+            body: `Hello ${req.body.fname} Click here to verify your phone number : ${config.get("URL")}/api/user/verify/sms/${smsToken}`
         })
 
         res.send({ "success": "Your account is successfully created" });
@@ -73,11 +73,11 @@ router.post("/register", async (req, res) => {
 router.get("/verify/sms/:token", async (req, res) => {
     try {
         let userSmsToken = req.params.token;
-        let userData = User.findOne({"verifyToken.sms" : userSmsToken});
-        if(userData.verifiedUser.sms){
+        let userData = User.findOne({ "verifyToken.sms": userSmsToken });
+        if (userData.verifiedUser.sms) {
             return res.status(200).send("<h1> Phone Number is already verified.");
         }
-        else{
+        else {
             userData.verifiedUser.sms = true;
             await userData.save();
             res.status(200).send("<h1> Phone Number is Verified Successfully");
@@ -155,4 +155,33 @@ router.post("/login", async (req, res) => {
     }
 });
 
+router.get("/auth", async (req, res) => {
+    try {
+        let decoded = jwt.verify(req.headers["auth-token"], config.get("SECRET_KEYS.JWT"));
+        // console.log(decoded);
+        res.status(200).json({ user_id: decoded.user_id });
+    } catch (error) {
+        // console.log(error);
+        res.status(401).json({ error: 'Unauthorised or Token Expired' });
+    }
+});
+
+router.post("/dashboard/:userId", async (req, res) => {
+    try {
+        let id = req.params.userId;
+        let userFound = await User.findById(id);
+        let{taskname,deadline,notificationType,agree} = await req.body;
+        
+        // Have to map the data to the database
+    
+
+       
+
+    }
+    catch (error) {
+        console.log(error);
+    }
+})
+
 export default router;
+

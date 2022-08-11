@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Link,useNavigate } from "react-router-dom";
 import Alert from "./Alert";
 import axios from "axios";
+import Loading from "./Loading";
 
 
-function Register({createAlert,alert}) {
+function Register({createAlert,alert,loading,showLoading}) {
     let navigate = useNavigate();
     const[user,setUser] = useState({
         fname : "",
@@ -30,9 +31,11 @@ function Register({createAlert,alert}) {
                 createAlert({msg:"Passwords do not match",type:"danger"})
            }
            else{
+            showLoading(true);
              let {data} = await axios.post("/api/user/register",user);
              createAlert({type : "success",msg:data.success});
              navigate("../login", { replace: true });
+             showLoading(false);
            }
        } 
        catch (error) {
@@ -40,6 +43,7 @@ function Register({createAlert,alert}) {
            createAlert({type : "danger",
                         msg : error.response.data.error});
        }
+       showLoading(false);
     }
     return (
         <>
@@ -49,6 +53,7 @@ function Register({createAlert,alert}) {
                         <Link to="/">
                             <img src="https://www.transparentpng.com/thumb/clock/amoxZ0-clock-clipart-hd.png" alt="img" style={{ width: "15%" }} />
                             <h1> Tasky Register</h1>
+                            {loading && <Loading/>}
                         </Link>
                     </center>
                 </div>
