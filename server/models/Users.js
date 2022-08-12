@@ -41,27 +41,17 @@ const userSchema = mongoose.Schema({
 
     tasks : [
         {
-            taskname  : {
-                type : String,
-                required : true,
-                default : ""
+            taskname: {
+                type: String,
+                required: true
             },
-
-            deadline : {
-                type : String,
-                required : true,
-                default : ""
+            deadline: {
+                type: String,
+                required: true
             },
-
-            notificationType : {
-                type : String,
-                required : true,
-                default : ""
-            },
-            agree : {
-                type : String,
-                required : true,
-                default : ""
+            notificationType: {
+                type: String,
+                required: true
             }
         }
     ]

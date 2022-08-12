@@ -2,43 +2,64 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import Loading from "./Loading";
+import Alert from "./Alert";
 
-function Dashboard({ loading, showLoading }) {
+function Dashboard({ loading, showLoading,alert,createAlert }) {
 
     let navigate = useNavigate();
 
-    const[userId,setUserId] = useState("");
-
-    const logout = () =>{
+    const logout = () => {
         localStorage.removeItem("token");
     }
-    const[checked,setChecked] = useState(false);
-    const[formData,setFormData] = useState({
-        taskname : "",
-        deadline : "",
-        notificationType : "",
-        agree : ""
+    const [disable, setDisable] = useState(true);
+    const [formData, setFormData] = useState({
+        taskname: "",
+        deadline: "",
+        notificationType: "",
+        agree: ""
     });
 
-    const handleChange = (e) =>{
-        
-        setChecked(!checked);
+
+
+    const handleChange = (e) => {
+
         let name = e.target.name;
         let value = e.target.value;
-        setFormData({
-            ...formData,
-            [name] : value
-        });
+
+        if (name === "agree") {
+            setFormData({
+                ...formData,
+                [name]: e.target.checked
+            });
+            (e.target.checked) ? setDisable(false) : setDisable(true)
+        } else {
+            setFormData({
+                ...formData,
+                [name]: value
+            });
+        }
+
     }
 
-    const handleSubmit = async(e) =>{
+    const handleSubmit = async (e) => {
         try {
             e.preventDefault();
-            let {data} = await axios.post(`/api/user/dashboard/${userId}`,formData);
-            console.log(data);
-        } 
-        catch (error) {
+            const { data } = await axios.post("/api/task/add", formData, {
+                headers: {
+                    'auth-token': localStorage.getItem("token")
+                }
+            });
+            createAlert({
+                type: "success",
+                msg: data.success
+            });
+        } catch (error) {
+            console.log(error.response.data.error)
             console.log(error);
+            createAlert({
+                type: "danger",
+                msg: error.response.data.error
+            });
         }
     }
 
@@ -52,7 +73,7 @@ function Dashboard({ loading, showLoading }) {
                     }
                 });
                 console.log(data);
-                setUserId(data.user_id);
+
                 showLoading(false);
             } catch (error) {
                 localStorage.removeItem("token");
@@ -68,13 +89,15 @@ function Dashboard({ loading, showLoading }) {
     return (
         <>
             <div style={{ backgroundColor: "#e5e5e5", padding: "15px", textAlign: "center" }}>
-                    {loading && <Loading/>}
-                  <h1>Tasky App</h1>
+
+                <h1>Tasky App</h1>
             </div>
             <div style={{ overflow: "auto" }}>
-
+                {loading && <Loading />}
                 <div className="main">
-                    <h2>Schedule New Tasks</h2> <hr />
+                    <h2>Schedule New Tasks</h2>
+                    <Alert alert={alert} />
+                    <hr />
                     <form onSubmit={handleSubmit}>
                         <label htmlFor="taskname">
                             <b>Task Name</b>
@@ -98,7 +121,7 @@ function Dashboard({ loading, showLoading }) {
                         /><br />
                         <label htmlFor="notificationType"><b>Notification Type</b></label> <br />
 
-                        <select name="notificationType"  onChange={handleChange}>
+                        <select name="notificationType" onChange={handleChange}>
                             <option value="">Choose your Notification Type</option>
                             <option value="sms">SMS</option>
                             <option value="email">Email</option>
@@ -108,7 +131,7 @@ function Dashboard({ loading, showLoading }) {
                         <input
                             type="checkbox"
                             name="agree"
-                            value={checked}
+                            value={formData.agree}
                             onChange={handleChange}
                         ></input>
 
@@ -117,7 +140,7 @@ function Dashboard({ loading, showLoading }) {
                             and messages as reminder notifications
                         </label> <br />
                         <br /><br />
-                        <input type="submit" value="Schedule Job" />
+                        <input type="submit" value="Schedule Job" id="button" disabled={disable} />
                     </form>
                 </div>
                 <div className="menu">

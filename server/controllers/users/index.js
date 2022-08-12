@@ -155,6 +155,17 @@ router.post("/login", async (req, res) => {
     }
 });
 
+/*
+    API : /api/user/auth
+    Desc : token  verification
+    Method : GET
+    Body : -
+    Params : -
+    Access : Private
+    Headers : token
+    Validations : Valid token
+*/
+
 router.get("/auth", async (req, res) => {
     try {
         let decoded = jwt.verify(req.headers["auth-token"], config.get("SECRET_KEYS.JWT"));
@@ -166,22 +177,22 @@ router.get("/auth", async (req, res) => {
     }
 });
 
-router.post("/dashboard/:userId", async (req, res) => {
-    try {
-        let id = req.params.userId;
-        let userFound = await User.findById(id);
-        let{taskname,deadline,notificationType,agree} = await req.body;
-        
-        // Have to map the data to the database
+// router.post("/dashboard/:userId", async (req, res) => {
+//     try {
+//         let id = req.params.userId;
+//         let userFound = await User.findById(id);
+//         let{taskname,deadline,notificationType,agree} = await req.body;
+//         console.log(agree);
+//         // Have to map the data to the database
     
 
        
 
-    }
-    catch (error) {
-        console.log(error);
-    }
-})
+//     }
+//     catch (error) {
+//         console.log(error);
+//     }
+// })
 
 export default router;
 

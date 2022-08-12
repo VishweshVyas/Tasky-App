@@ -33,7 +33,7 @@ function App() {
         <Route path="/register" element={<Register alert={alert} createAlert={createAlert} loading={loading} showLoading={showLoading} />} ></Route>
         <Route path="/login" element={<Login alert={alert} createAlert={createAlert} loading={loading} showLoading={showLoading}/>}></Route>
         <Route element={<PrivateRoutes />}>
-          <Route path="/dashboard" element={<Dashboard loading={loading} showLoading={showLoading} />}></Route>
+          <Route path="/dashboard" element={<Dashboard loading={loading} showLoading={showLoading} alert={alert} createAlert={createAlert}  />}></Route>
         </Route>
 
       </Routes>
