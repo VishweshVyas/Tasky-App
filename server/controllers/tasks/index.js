@@ -22,26 +22,68 @@ const router = express.Router();
 router.post("/add", authMiddleware, async (req, res, next) => {
     try {
         const userData = await User.findById(req.user.user_id);
+        let notificationType = req.body.notificationType;
+        let taskName = req.body.taskname;
         let current = new Date();
         let deadline = new Date(req.body.deadline)
+        let thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+        let thirtDaysInFuture = new Date().getTime() + thirtyDaysInMs;
+        let date = new Date();
+        date = date.setMinutes(date.getMinutes() + 30);
+        
         if (current > deadline) {
             return res.status(401).json({ error: "Date cannot be backdated" });
         }
-        // else if (new Date(req.body.deadline)) {
-        //     //check if it is less than 30 minutes
-        // }
-        // else if (new Date(req.body.deadline)) {
-        //     // check if it is > 30 days 
-        // }
+        else if (deadline < date) {
+            return res.status(401).json({ error: "The deadline must be more than 30 minutes from the current time." });
+        }
+        else if (deadline > thirtDaysInFuture) {
+            return res.status(401).json({ error: "The deadline must be within 30 days." });
+        }
+       
         userData.tasks.push(req.body);
-
         
+        await userData.save();
 
+        fire(userData.user_id,deadline,userData.phone,userData.email,notificationType,userData.fname,taskName);
 
-        // await userData.save();
+        res.status(200).json({ success: "New Task has been scheduled" });
 
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'Internal server error' });
 
-        // fire(new Date(req.body.deadline));
+    }
+});
+
+router.put("/edit/:toDoId", authMiddleware, async (req, res, next) => {
+    try {
+        const userData = await User.findById(req.user.user_id);
+        let notificationType = req.body.notificationType;
+        let taskName = req.body.taskname;
+        let current = new Date();
+        let deadline = new Date(req.body.deadline)
+        let thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+        let thirtDaysInFuture = new Date().getTime() + thirtyDaysInMs;
+        let date = new Date();
+        date = date.setMinutes(date.getMinutes() + 30);
+        
+        if (current > deadline) {
+            return res.status(401).json({ error: "Date cannot be backdated" });
+        }
+        else if (deadline < date) {
+            return res.status(401).json({ error: "The deadline must be more than 30 minutes from the current time." });
+        }
+        else if (deadline > thirtDaysInFuture) {
+            return res.status(401).json({ error: "The deadline must be within 30 days." });
+        }
+       
+        userData.tasks.push(req.body);
+        
+        await userData.save();
+
+        fire(userData.user_id,deadline,userData.phone,userData.email,notificationType,userData.fname,taskName);
 
         res.status(200).json({ success: "New Task has been scheduled" });
 
