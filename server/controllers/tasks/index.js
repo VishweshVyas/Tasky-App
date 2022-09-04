@@ -7,7 +7,10 @@ import sendMail from "../../utils/sendMail.js";
 import sendSMS from "../../utils/sendSMS.js";
 import jwt from "jsonwebtoken";
 import authMiddleware from "../../middlewares/auth.js"
-import fire from "../../utils/worker.js";
+import { fire } from "../../utils/worker.js";
+import verifyDateMiddleware from "../../middlewares/verify.js";
+import { taskValidations, errorMiddleware, taskEditValidations } from "../../middlewares/validations.js";
+import { scheduledJobs, cancelJob } from "node-schedule";
 
 const router = express.Router();
 /*
@@ -19,33 +22,49 @@ const router = express.Router();
     Validations : valid token
 */
 
-router.post("/add", authMiddleware, async (req, res, next) => {
+router.post("/add", authMiddleware, taskValidations(), verifyDateMiddleware, errorMiddleware, async (req, res, next) => {
     try {
         const userData = await User.findById(req.user.user_id);
         let notificationType = req.body.notificationType;
         let taskName = req.body.taskname;
-        let current = new Date();
-        let deadline = new Date(req.body.deadline)
-        let thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
-        let thirtDaysInFuture = new Date().getTime() + thirtyDaysInMs;
-        let date = new Date();
-        date = date.setMinutes(date.getMinutes() + 30);
-        
-        if (current > deadline) {
-            return res.status(401).json({ error: "Date cannot be backdated" });
+
+        let deadline = new Date(req.body.deadline);
+        let current = new Date(); //current UTC0
+
+        let mins = ((deadline - current)) / (1000 * 60); //diff in mins
+        let days = ((deadline - current)) / (1000 * 60 * 60 * 24); //diff in days
+
+        // getting the reminders array
+
+        //creating reminders array 1/4,1/2,3/4
+        let reminders = [];
+        let reminder1 = new Date((+current) + ((mins / 4) * 60 * 1000));
+        let reminder2 = new Date((+current) + ((mins / 2) * 60 * 1000));
+        let reminder3 = new Date((+current) + ((mins * 0.75) * 60 * 1000));
+        reminders.push(reminder1, reminder2, reminder3);
+
+        let taskdata = {
+            reminders,
+            taskname: req.body.taskname,
+            deadline,
+            notificationType: req.body.notificationType
         }
-        else if (deadline < date) {
-            return res.status(401).json({ error: "The deadline must be more than 30 minutes from the current time." });
-        }
-        else if (deadline > thirtDaysInFuture) {
-            return res.status(401).json({ error: "The deadline must be within 30 days." });
-        }
-       
-        userData.tasks.push(req.body);
-        
+        //save into db and schedule jobs
+        userData.tasks.push(taskdata);
+        let taskid = userData.tasks[userData.tasks.length - 1]._id.toString()
         await userData.save();
 
-        fire(userData.user_id,deadline,userData.phone,userData.email,notificationType,userData.fname,taskName);
+        let data = {
+            taskid: userData.user_id,
+            reminders,
+            phone: userData.phone,
+            email: userData.email,
+            notificationType,
+            fname: userData.fname,
+            taskName,
+            taskid
+        }
+        fire(data);
 
         res.status(200).json({ success: "New Task has been scheduled" });
 
@@ -57,36 +76,72 @@ router.post("/add", authMiddleware, async (req, res, next) => {
     }
 });
 
-router.put("/edit/:toDoId", authMiddleware, async (req, res, next) => {
+
+router.put("/edit/:toDoId", authMiddleware, taskEditValidations(), verifyDateMiddleware, errorMiddleware, async (req, res, next) => {
     try {
         const userData = await User.findById(req.user.user_id);
+        let taskId = req.params.toDoId;
         let notificationType = req.body.notificationType;
         let taskName = req.body.taskname;
-        let current = new Date();
-        let deadline = new Date(req.body.deadline)
-        let thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
-        let thirtDaysInFuture = new Date().getTime() + thirtyDaysInMs;
-        let date = new Date();
-        date = date.setMinutes(date.getMinutes() + 30);
-        
-        if (current > deadline) {
-            return res.status(401).json({ error: "Date cannot be backdated" });
-        }
-        else if (deadline < date) {
-            return res.status(401).json({ error: "The deadline must be more than 30 minutes from the current time." });
-        }
-        else if (deadline > thirtDaysInFuture) {
-            return res.status(401).json({ error: "The deadline must be within 30 days." });
-        }
-       
-        userData.tasks.push(req.body);
-        
-        await userData.save();
+        let taskData = userData.tasks.find((task) => task._id == taskId);
 
-        fire(userData.user_id,deadline,userData.phone,userData.email,notificationType,userData.fname,taskName);
+        if (!taskData) return res.status(404).json({ error: 'Invalid task id' });
+        let index = userData.tasks.findIndex((task) => task._id == taskId);
+        if (req.body.isCompleted == true) {
+            taskData.reminders.forEach((element, i) => {
+                cancelJob(`${taskId}-${i}`);
+            });
+            userData.tasks[index].isCompleted = true;
+            //update the db
+            await userData.save();
+            res.status(200).json({ success: 'Task status has been updated' });
 
-        res.status(200).json({ success: "New Task has been scheduled" });
+        } else {
+            taskData.reminders.forEach((element, i) => {
+                cancelJob(`${taskId}-${i}`)
+            });
 
+            let deadline = new Date(req.body.deadline);
+            let current = new Date(); //current UTC0
+
+            let mins = ((deadline - current)) / (1000 * 60); //diff in mins
+            let days = ((deadline - current)) / (1000 * 60 * 60 * 24); //diff in days
+
+            // getting the reminders array
+
+            //creating reminders array 1/4,1/2,3/4
+            let reminders = [];
+            let reminder1 = new Date((+current) + ((mins / 4) * 60 * 1000));
+            let reminder2 = new Date((+current) + ((mins / 2) * 60 * 1000));
+            let reminder3 = new Date((+current) + ((mins * 0.75) * 60 * 1000));
+            reminders.push(reminder1, reminder2, reminder3);
+
+            let taskdata = {
+                reminders,
+                taskname: req.body.taskname,
+                deadline,
+                isCompleted: req.body.isCompleted,
+                notificationType: req.body.notificationType
+            }
+            //save into db and schedule jobs
+            userData.tasks[index] = taskdata;
+            let taskid = userData.tasks[userData.tasks.length - 1]._id.toString()
+            await userData.save();
+
+            let data = {
+                taskid: userData.user_id,
+                reminders,
+                phone: userData.phone,
+                email: userData.email,
+                notificationType,
+                fname: userData.fname,
+                taskName,
+                taskid
+            }
+            fire(data);
+            res.status(200).json({ success: 'Task  has been updated' });
+
+        }
     }
     catch (error) {
         console.log(error);
@@ -94,10 +149,84 @@ router.put("/edit/:toDoId", authMiddleware, async (req, res, next) => {
 
     }
 });
+
+
+/*
+    API : /api/task/
+    Desc : GET all the tasks of this user
+    Method : GET
+    Body : taskname, deadline, notificationType
+    Access : Private
+*/
+
+router.get("/", authMiddleware, errorMiddleware, async (req, res, next) => {
+    try {
+        const userData = await User.findById(req.user.user_id);
+
+        res.status(200).json({ tasks: userData.tasks });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+
+
+});
+
+/*
+    API : /api/task/:taskid
+    Desc : GET a particular task
+    Method : GET
+    Body : taskname, deadline, notificationType
+    Access : Private
+*/
+
+
+router.get("/:taskid", authMiddleware, errorMiddleware, async (req, res, next) => {
+    try {
+        const userData = await User.findById(req.user.user_id);
+        let taskId = req.params.taskid;
+        let taskData = userData.tasks.find((task) => task._id == taskId);
+
+        if (!taskData) {
+            return res.status(404).json({ error: 'Task Id is invalid' });
+        }
+        return res.status(200).json({ taskData });
+
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+
+});
+
+
+router.delete("/delete/:taskId", authMiddleware, errorMiddleware, async (req, res, next) => {
+    try {
+        const userData = await User.findById(req.user.user_id);
+        let taskId = req.params.taskId;
+        let taskData = userData.tasks.find((task) => task._id == taskId);
+
+        if (!taskData) return res.status(404).json({ error: 'Invalid task id' });
+        userData.tasks = userData.tasks.filter((ele) => ele._id != taskId);
+        await userData.save();
+        console.log(scheduledJobs);
+        taskData.reminders.forEach((element, i) => {
+            cancelJob(`${taskId}-${i}`)
+        });
+        console.log(scheduledJobs);
+        res.status(200).json({ success: 'Deleted successfully' });
+    }
+
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+
 export default router;
 
-// Features to add :
-// 1 . To add a condition that the deadline should be > 30 Minutes && should be within 30 days.
-// 2. Based on the deadline, we need to schedule jobs.
 
  //Note : Sharing variables between middleware is only possibe via req obj

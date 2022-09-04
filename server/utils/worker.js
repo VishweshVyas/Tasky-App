@@ -1,36 +1,27 @@
-import { scheduleJob,scheduledJobs } from "node-schedule";
+import { scheduleJob } from "node-schedule";
 import sendMail from "./sendMail.js";
 import sendSMS from "./sendSMS.js";
 
-function fire(id,deadline,phone,email,type,name,taskName){
+function fire(data){
 
-        let current = new Date();
-        let diff = deadline.getTime() - current.getTime();
-        // console.log(diff);
-        let diffDateMinutes = Math.floor((diff/1000)/60);
-        // console.log(diffDateMinutes);
-        let minutes = [diffDateMinutes*0.25,diffDateMinutes*0.50,diffDateMinutes*0.75];
-        // console.log(minutes);
-        minutes = minutes.map((minute)=>{
-            return new Date().setMinutes(new Date().getMinutes() + minute);
-        });
-        // console.log(minutes);
-        minutes = minutes.map((ele)=>{
-            return new Date(ele);
-        })
-
-        for (let index = 0; index < minutes.length; index++) {
-            console.log(minutes[index].toString());
-        }
-        
-      
-        minutes.forEach((minute,index)=>{
-            scheduleJob(`${id}-${index}`,minute,()=>{
-                if(type == "email"){
+        // let current = new Date();
+        // let diff = deadline.getTime() - current.getTime();
+        // let diffDateMinutes = Math.floor((diff/1000)/60);
+        // let minutes = [diffDateMinutes*0.25,diffDateMinutes*0.50,diffDateMinutes*0.75];
+        // minutes = minutes.map((minute)=>{
+        //     return new Date().setMinutes(new Date().getMinutes() + minute);
+        // });
+        // minutes = minutes.map((ele)=>{
+        //     return new Date(ele);
+        // })
+       
+        data.reminders.forEach((reminder,i)=>{
+            scheduleJob(`${data.taskid}-${i}`,reminder,()=>{
+                if(data.notificationType == "email"){
                     sendMail({
-                        to: email,
+                        to: data.email,
                         subject: "Task Reminder",
-                        body: `Hello ${name} This email is a reminder for your task : ${taskName}
+                        body: `Hello ${data.fame} This email is a reminder for your task : ${data.taskName}
                        <br/><br/> 
                         Thank you <br /><br />
                         Regards <br />
@@ -38,17 +29,17 @@ function fire(id,deadline,phone,email,type,name,taskName){
                     });
                 
                 }
-                else if(type == "phone"){
+                else if(data.notificationType == "phone"){
                     sendSMS({
-                        to: phone,
-                        body: `Hello ${name} This message is a reminder for your task : ${taskName}`
+                        to: data.phone,
+                        body: `Hello ${data.fname} This message is a reminder for your task : ${data.taskName}`
                     });
                 }
                 else{
                     sendMail({
-                        to: email,
+                        to: data.email,
                         subject: "Task Reminder",
-                        body: `Hello ${name} This email is a reminder for your task : ${taskName}
+                        body: `Hello ${data.fname} This email is a reminder for your task : ${data.taskName}
                        <br/><br/> 
                         Thank you <br /><br />
                         Regards <br />
@@ -56,16 +47,19 @@ function fire(id,deadline,phone,email,type,name,taskName){
                     });
     
                     sendSMS({
-                        to: phone,
-                        body: `Hello ${name} This message is a reminder for your task : ${taskName}`
+                        to: data.phone,
+                        body: `Hello ${data.fname} This message is a reminder for your task : ${data.taskName}`
                     });
                 }
             })
         })
-        console.log(scehduledJobs);
-        
+       
     
 }
 
- export default fire;
+function cancelJob(){
+    scheduleJob.cancel();
+}
+
+ export {fire,cancelJob};
 

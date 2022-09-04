@@ -46,12 +46,19 @@ const userSchema = mongoose.Schema({
                 required: true
             },
             deadline: {
-                type: String,
+                type: Date,
                 required: true
+            },
+            isCompleted: {
+                type: Boolean,
+                default: false
             },
             notificationType: {
                 type: String,
                 required: true
+            },
+            reminders : {
+                type : Array
             }
         }
     ]

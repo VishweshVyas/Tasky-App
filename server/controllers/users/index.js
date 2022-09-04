@@ -6,6 +6,7 @@ import User from "../../models/Users.js";
 import sendMail from "../../utils/sendMail.js";
 import sendSMS from "../../utils/sendSMS.js";
 import jwt from "jsonwebtoken";
+import { userRegisterValidations, errorMiddleware ,userLoginValidations} from "../../middlewares/validations.js";
 
 const router = express.Router();
 
@@ -19,7 +20,7 @@ const router = express.Router();
     Validations : Unique email, Password Strength
 */
 
-router.post("/register", async (req, res) => {
+router.post("/register",userRegisterValidations(),errorMiddleware, async (req, res) => {
     try {
         let userData = await User.findOne({ email: req.body.email });
         if (userData) return res.status(400).json({ error: `Email already exists` });
@@ -130,7 +131,7 @@ router.get("/verify/email/:token", async (req, res) => {
 */
 
 
-router.post("/login", async (req, res) => {
+router.post("/login", userLoginValidations(),errorMiddleware,async (req, res) => {
     try {
         const userData = await User.findOne({ email: req.body.loginEmail })
         if (!userData) {
