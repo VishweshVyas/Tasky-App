@@ -6,12 +6,13 @@ import Dashboard from './components/Dashboard';
 import { Routes, Route } from "react-router-dom";
 import { useState } from 'react';
 import PrivateRoutes from './utils/PrivateRoutes';
+import ScheduleTask from './components/ScheduleTask';
 
 
 function App() {
 
   const [alert, setAlert] = useState(null);
-  const[loading,setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const createAlert = (msg) => {
     setAlert(msg);
@@ -20,7 +21,7 @@ function App() {
     }, 3000);
   }
 
-  const showLoading = (status) =>{
+  const showLoading = (status) => {
     setLoading(status);
   }
 
@@ -31,9 +32,10 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />}></Route>
         <Route path="/register" element={<Register alert={alert} createAlert={createAlert} loading={loading} showLoading={showLoading} />} ></Route>
-        <Route path="/login" element={<Login alert={alert} createAlert={createAlert} loading={loading} showLoading={showLoading}/>}></Route>
+        <Route path="/login" element={<Login alert={alert} createAlert={createAlert} loading={loading} showLoading={showLoading} />}></Route>
         <Route element={<PrivateRoutes />}>
-          <Route path="/dashboard" element={<Dashboard loading={loading} showLoading={showLoading} alert={alert} createAlert={createAlert}  />}></Route>
+          <Route path="/dashboard" element={<Dashboard loading={loading} showLoading={showLoading} alert={alert} createAlert={createAlert} />}></Route>
+          <Route path="/dashboard/add" element={<ScheduleTask loading={loading} showLoading={showLoading} alert={alert} createAlert={createAlert}/>} />
         </Route>
 
       </Routes>

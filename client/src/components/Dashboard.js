@@ -3,89 +3,35 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import Loading from "./Loading";
 import Alert from "./Alert";
+import ScheduleTask from "./ScheduleTask";
 
-function Dashboard({ loading, showLoading,alert,createAlert }) {
-
+function Dashboard({ loading, showLoading, alert, createAlert }) {
     let navigate = useNavigate();
-
     const logout = () => {
         localStorage.removeItem("token");
     }
-    const [disable, setDisable] = useState(true);
-    const [formData, setFormData] = useState({
-        taskname: "",
-        deadline: "",
-        notificationType: "",
-        agree: ""
-    });
-
-
-
-    const handleChange = (e) => {
-
-        let name = e.target.name;
-        let value = e.target.value;
-
-        if (name === "agree") {
-            setFormData({
-                ...formData,
-                [name]: e.target.checked
-            });
-            (e.target.checked) ? setDisable(false) : setDisable(true)
-        } else {
-            setFormData({
-                ...formData,
-                [name]: value
-            });
-        }
-
-    }
-
-    const handleSubmit = async (e) => {
-        try {
-            e.preventDefault();
-            const { data } = await axios.post("/api/task/add", formData, {
-                headers: {
-                    'auth-token': localStorage.getItem("token")
-                }
-            });
-            createAlert({
-                type: "success",
-                msg: data.success
-            });
-        } catch (error) {
-            console.log(error.response.data.error)
-            console.log(error);
-            createAlert({
-                type: "danger",
-                msg: error.response.data.error
-            });
-        }
-    }
+    const [tasks, setTasks] = useState([]);
 
     useEffect(() => {
-        async function fetchUser() {
+        async function getTasks() {
             try {
-                showLoading(true);
-                const { data } = await axios.get("/api/user/auth", {
+                const { data } = await axios.get("/api/task/", {
                     headers: {
                         'auth-token': localStorage.getItem("token")
                     }
-                });
-                console.log(data);
-
-                showLoading(false);
-            } catch (error) {
+                })
+                setTasks(data.tasks);
+            }
+            catch (error) {
+                console.log(error);
                 localStorage.removeItem("token");
-                showLoading(false);
                 navigate("/login");
             }
         }
-        fetchUser();
-        // eslint-disable-next-line
-    }, []);
+        getTasks();
+    }, [])
 
-
+    console.log(tasks);
     return (
         <>
             <div style={{ backgroundColor: "#e5e5e5", padding: "15px", textAlign: "center" }}>
@@ -95,62 +41,50 @@ function Dashboard({ loading, showLoading,alert,createAlert }) {
             <div style={{ overflow: "auto" }}>
                 {loading && <Loading />}
                 <div className="main">
-                    <h2>Schedule New Tasks</h2>
                     <Alert alert={alert} />
-                    <hr />
-                    <form onSubmit={handleSubmit}>
-                        <label htmlFor="taskname">
-                            <b>Task Name</b>
-                        </label><br />
-                        <input
-                            type="text"
-                            placeholder="Enter your taskname"
-                            name="taskname"
-                            value={formData.taskname}
-                            onChange={handleChange}
-                        />
-                        <label htmlFor="deadline">
-                            <b>Deadline</b>
-                        </label> <br />
-                        <input
-                            type="datetime-local"
-                            placeholder="Enter your Task Deadline"
-                            name="deadline"
-                            value={formData.deadline}
-                            onChange={handleChange}
-                        /><br />
-                        <label htmlFor="notificationType"><b>Notification Type</b></label> <br />
-
-                        <select name="notificationType" onChange={handleChange}>
-                            <option value="">Choose your Notification Type</option>
-                            <option value="sms">SMS</option>
-                            <option value="email">Email</option>
-                            <option value="both">Both</option>
-                        </select>
-                        <hr />
-                        <input
-                            type="checkbox"
-                            name="agree"
-                            value={formData.agree}
-                            onChange={handleChange}
-                        ></input>
-
-                        <label htmlFor="agree">
-                            By clicking Schedule Job Button below, you agree to receive emails
-                            and messages as reminder notifications
-                        </label> <br />
-                        <br /><br />
-                        <input type="submit" value="Schedule Job" id="button" disabled={disable} />
-                    </form>
+                    <table>
+                        <thead>
+                            <th>S. Number</th>
+                            <th>TaskName</th>
+                            <th>Deadline</th>
+                            <th>NotificationType</th>
+                            <th>Completed</th>
+                            <th>Email Button</th>
+                            <th>Delete Button</th>
+                        </thead>
+                        <tbody>
+                            {
+                                tasks.map((ele, index) => {
+                                    return (
+                                        <>
+                                            <tr key={index}>
+                                                <td>{index+1}</td>
+                                                <td>{ele.taskname}</td>
+                                                <td>{ele.deadline}</td>
+                                                <td>{ele.notificationType}</td>
+                                                <td>{String(ele.isCompleted)}</td>
+                                                <td><button>Edit Button</button></td>
+                                                <td><button>Delete Button</button></td>
+                                            </tr>
+                                        </>
+                                    )
+                                })
+                            }
+                        </tbody>
+                    </table>
                 </div>
                 <div className="menu">
-                    <Link to="/">Link 1</Link>
+                    <Link to="/dashboard/add">Add a new Task</Link>
                     <Link to="/">Link 2</Link>
                     <Link to="/">Link 3</Link>
                     <Link to="/" onClick={logout}>Log out</Link>
                 </div>
 
             </div>
+
+
+
+
         </>
     )
 }
