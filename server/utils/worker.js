@@ -21,7 +21,7 @@ function fire(data){
                     sendMail({
                         to: data.email,
                         subject: "Task Reminder",
-                        body: `Hello ${data.fame} This email is a reminder for your task : ${data.taskName}
+                        body: `Hello ${data.fname} This email is a reminder for your task : ${data.taskName}
                        <br/><br/> 
                         Thank you <br /><br />
                         Regards <br />
@@ -29,7 +29,7 @@ function fire(data){
                     });
                 
                 }
-                else if(data.notificationType == "phone"){
+                else if(data.notificationType == "sms"){
                     sendSMS({
                         to: data.phone,
                         body: `Hello ${data.fname} This message is a reminder for your task : ${data.taskName}`

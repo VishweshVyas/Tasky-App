@@ -148,8 +148,7 @@ function ScheduleTask({ loading, showLoading,alert,createAlert }) {
                 </div>
                 <div className="menu">
                 <Link to="/">Add a new Task</Link>
-                <Link to="/">Link 2</Link>
-                <Link to="/">Link 3</Link>
+                <Link to="/dashboard">Dashboard</Link>
                 <Link to="/" onClick={logout}>Log out</Link>
             </div>
               
