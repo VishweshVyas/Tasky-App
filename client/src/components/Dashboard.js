@@ -79,7 +79,7 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
         msg: data.success
       });
       console.log(data);
-      // window.location.reload();
+      window.location.reload();
     } catch (error) {
       console.log(error.response.data.error)
       console.log(error);
