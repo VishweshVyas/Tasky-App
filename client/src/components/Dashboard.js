@@ -14,6 +14,12 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
   const [tasks, setTasks] = useState([]);
   const [edit, setEdit] = useState(false);
   const [taskId, setTaskId] = useState();
+  const[value,setValue] = useState({
+    taskname: "",
+    deadline: "",
+    notificationType: "",
+    isCompleted: ""
+  });
   
   const [disable, setDisable] = useState(true);
   const [formData, setFormData] = useState({
@@ -32,8 +38,11 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
           'auth-token': localStorage.getItem("token")
         }
       });
-      window.location.reload();
-      console.log(data);
+      
+      const newArray = tasks.filter((task)=>{
+        return task._id != id;
+      })
+      setTasks(newArray);
     }
     catch (error) {
       console.log(error);
@@ -44,8 +53,23 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
   const handleEdit = (id) => {
     setEdit(true);
     setTaskId(id);
+    tasks.map((task)=>{
+      if(task._id == id){
+        setValue({
+          taskname : task.taskname,
+          deadline : task.deadline,
+          notificationType : task.notificationType,
+          isCompleted : task.isCompleted
+        });
+      }
+    })
+    console.log(value);
   }
 
+  const changeDateFormat = (date) =>{
+    const d = new Date(date);
+    return d.toISOString();
+  }
   const onChange = (e) => {
 
     let name = e.target.name;
@@ -78,9 +102,10 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
         type: "success",
         msg: data.success
       });
-      console.log(data);
-      window.location.reload();
-    } catch (error) {
+
+      
+    } 
+    catch (error) {
       console.log(error.response.data.error)
       console.log(error);
       createAlert({
@@ -113,7 +138,8 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
     getTasks();
   }, [])
 
-
+// When the edit button gets clicked , we need to prefill the info in the form.
+// Change the state of the task array to reload.
   return (
     <>
       <div style={{ backgroundColor: "#e5e5e5", padding: "15px", textAlign: "center" }}>
@@ -157,7 +183,7 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
                               type="text"
                               placeholder="Enter your taskname"
                               name="taskname"
-
+                              value={value.taskname}
                               onChange={onChange}
                             />
                           </td>
@@ -166,6 +192,7 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
                               type="datetime-local"
                               placeholder="Enter your Task Deadline"
                               name="deadline"
+                              value={(value.deadline)}
                               onChange={onChange}
                             />
                           </td>
@@ -183,7 +210,7 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
                             <input
                               type="checkbox"
                               name="isCompleted"
-
+                              value={value.isCompleted}
                               onChange={onChange}
                             ></input>
                           </td>
