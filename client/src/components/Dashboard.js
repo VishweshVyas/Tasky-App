@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Loading from "./Loading";
 import Alert from "./Alert";
 import ScheduleTask from "./ScheduleTask";
+import moment from "moment";
 
 
 function Dashboard({ loading, showLoading, alert, createAlert }) {
@@ -14,14 +15,8 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
   const [tasks, setTasks] = useState([]);
   const [edit, setEdit] = useState(false);
   const [taskId, setTaskId] = useState();
-  const[value,setValue] = useState({
-    taskname: "",
-    deadline: "",
-    notificationType: "",
-    isCompleted: ""
-  });
-  
-  const [disable, setDisable] = useState(true);
+
+  const [disable, setDisable] = useState(false);
   const [formData, setFormData] = useState({
     taskname: "",
     deadline: "",
@@ -32,14 +27,14 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
   const handleClick = async (id) => {
     try {
 
-     
+
       const data = await axios.delete(`api/task/delete/${id}`, {
         headers: {
           'auth-token': localStorage.getItem("token")
         }
       });
-      
-      const newArray = tasks.filter((task)=>{
+
+      const newArray = tasks.filter((task) => {
         return task._id != id;
       })
       setTasks(newArray);
@@ -50,26 +45,25 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
     }
   }
 
-  const handleEdit = (id) => {
+  const handleEdit = (ele) => {
     setEdit(true);
-    setTaskId(id);
-    tasks.map((task)=>{
-      if(task._id == id){
-        setValue({
-          taskname : task.taskname,
-          deadline : task.deadline,
-          notificationType : task.notificationType,
-          isCompleted : task.isCompleted
-        });
-      }
+    setTaskId(ele._id);
+    setFormData({
+      taskname: ele.taskname,
+      deadline: ele.deadline,
+      notificationType: ele.notificationType,
+      isCompleted: ele.isCompleted
     })
-    console.log(value);
+
   }
 
-  const changeDateFormat = (date) =>{
-    const d = new Date(date);
-    return d.toISOString();
-  }
+  // const changeDateFormat = (d) => {
+
+  //   let datestring = d.getFullYear().toString().padStart(4, '0') + '-' + (d.getMonth()+1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0') + "" + d.getHour() + ":" + d.getMinutes()+ ":" + d.getSeconds();
+  //   return datestring;
+  // }
+
+
   const onChange = (e) => {
 
     let name = e.target.name;
@@ -93,7 +87,7 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
 
   const isGonnaSave = async (id) => {
     try {
-      const {data} = await axios.put(`/api/task/edit/${id}`, formData, {
+      const { data } = await axios.put(`/api/task/edit/${id}`, formData, {
         headers: {
           'auth-token': localStorage.getItem("token")
         }
@@ -103,8 +97,16 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
         msg: data.success
       });
 
-      
-    } 
+      const newArray = tasks.filter((task) => {
+        return task._id != id;
+      })
+
+      newArray = newArray.push(formData);
+
+      setTasks(newArray);
+
+
+    }
     catch (error) {
       console.log(error.response.data.error)
       console.log(error);
@@ -138,8 +140,9 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
     getTasks();
   }, [])
 
-// When the edit button gets clicked , we need to prefill the info in the form.
-// Change the state of the task array to reload.
+  // When the edit button gets clicked , we need to prefill the info in the form.
+  // Right now , it is not getting edited if the completed is set to true, else it is fine
+  // Also, we need to change the state of the tasks array so that when it gets edited , the component gets rerenderd instead of reload.
   return (
     <>
       <div style={{ backgroundColor: "#e5e5e5", padding: "15px", textAlign: "center" }}>
@@ -175,55 +178,55 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
                 </thead>
                 {edit ? (
                   <tbody>
-            
-                        <tr >
-                          <td>1</td>
-                          <td >
-                            <input
-                              type="text"
-                              placeholder="Enter your taskname"
-                              name="taskname"
-                              value={value.taskname}
-                              onChange={onChange}
-                            />
-                          </td>
-                          <td >
-                            <input
-                              type="datetime-local"
-                              placeholder="Enter your Task Deadline"
-                              name="deadline"
-                              value={(value.deadline)}
-                              onChange={onChange}
-                            />
-                          </td>
-                          <td >
-                            <select name="notificationType" onChange={onChange}>
-                              <option value="">
-                                Choose your Notification Type
-                              </option>
-                              <option value="sms">SMS</option>
-                              <option value="email">Email</option>
-                              <option value="both">Both</option>
-                            </select>
-                          </td>
-                          <td >
-                            <input
-                              type="checkbox"
-                              name="isCompleted"
-                              value={value.isCompleted}
-                              onChange={onChange}
-                            ></input>
-                          </td>
-                          <td>
-                            <button className="btn2" onClick={() => { isGonnaSave(taskId) }}>
-                              Save
-                            </button>
-                          </td>
 
-                        </tr>
-               
+                    <tr >
+                      <td>1</td>
+                      <td >
+                        <input
+                          type="text"
+                          placeholder="Enter your taskname"
+                          name="taskname"
+                          value={formData.taskname}
+                          onChange={onChange}
+                        />
+                      </td>
+                      <td >
+                        <input
+                          type="datetime-local"
+                          placeholder="Enter your Task Deadline"
+                          name="deadline"
+                          value={formData.deadline}
+                          onChange={onChange}
+                        />
+                      </td>
+                      <td >
+                        <select name="notificationType" onChange={onChange} value={formData.notificationType}>
+                          <option value="">
+                            Choose your Notification Type
+                          </option>
+                          <option value="sms">SMS</option>
+                          <option value="email">Email</option>
+                          <option value="both">Both</option>
+                        </select>
+                      </td>
+                      <td >
+                        <input
+                          type="checkbox"
+                          name="isCompleted"
+                          checked={formData.isCompleted}
+                          onChange={onChange}
+                        ></input>
+                      </td>
+                      <td>
+                        <button className="btn2" onClick={() => { isGonnaSave(taskId) }}>
+                          Save
+                        </button>
+                      </td>
+
+                    </tr>
+
                   </tbody>
-                
+
                 ) : (
                   <tbody>
                     {
@@ -235,10 +238,12 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
                           <td>{convertDate(ele.deadline)}</td>
                           <td>{ele.notificationType}</td>
                           <td>{ele.isCompleted ? "true" : "false"}</td>
-                          <td>
-                            <button className="btn2" onClick={() => handleEdit(ele._id)}>
+                          <td>{
+                            ele.isCompleted ? "Cannot Edit" : <button className="btn2" onClick={() => handleEdit(ele)}>
                               Edit
                             </button>
+                          }
+
                           </td>
                           <td>
                             <button
@@ -258,15 +263,15 @@ function Dashboard({ loading, showLoading, alert, createAlert }) {
           )}
         </div>
         <div className="menu">
-        <Link to="/dashboard/add">Add a new Task</Link>
-        <Link to="/dashboard">Dashboard</Link>
-        <Link to="/" onClick={logout}>Log out</Link>
-      </div>
+          <Link to="/dashboard/add">Add a new Task</Link>
+          <Link to="/dashboard">Dashboard</Link>
+          <Link to="/" onClick={logout}>Log out</Link>
+        </div>
 
       </div>
 
 
-      
+
 
 
     </>

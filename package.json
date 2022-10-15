@@ -4,14 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "server" : "npm start --prefix server ",
-    "client" : "npm start --prefix client",
+    "server": "npm start --prefix server ",
+    "client": "npm start --prefix client",
     "start": "concurrently 'npm run client' 'npm run server' "
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "concurrently": "^7.3.0"
+    "concurrently": "^7.3.0",
+    "moment": "^2.29.4"
   }
 }
